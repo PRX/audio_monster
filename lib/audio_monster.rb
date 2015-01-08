@@ -1,5 +1,8 @@
-require "audio_monster/version"
+# -*- encoding: utf-8 -*-
+
+require 'audio_monster/version'
+require 'audio_monster/configuration'
 
 module AudioMonster
-  # Your code goes here...
+  extend Configuration
 end
