@@ -1,20 +1,5 @@
 # -*- encoding: utf-8 -*-
 
-# # detect the sox version to deal wth changes in comand line options after 14.1.0
-# # http://sox.sourceforge.net/Docs/FAQ
-# sox_version = `#{SOX} --version`
-# version = /^.*SoX v(\d*)\.(\d*)\.(\d*)/.match(sox_version) || []
-# # puts "version: #{version.inspect}"
-
-# if (version.size > 0) && (version[1].to_i < 14) || ((version[1].to_i == 14) && (version[2].to_i < 1))
-#   # puts "Using older sox syntax: #{sox_version}"
-#   SOX_16_BITS = '-w'
-#   SOX_8_BITS = '-b'
-# else
-#   SOX_16_BITS = '-b 16'
-#   SOX_8_BITS = '-b 8'
-# end
-
 require 'mkmf'
 require 'logger'
 
@@ -130,6 +115,25 @@ module AudioMonster
       self.twolame = 'twolame'
       self
     end
+
+    def bin(name)
+      "#{bin_dir}#{name}"
+    end
+
+    # # detect the sox version to deal wth changes in comand line options after 14.1.0
+    # # http://sox.sourceforge.net/Docs/FAQ
+    # def configure_sox
+    #   sox_version = `#{bin(:sox)} --version`
+    #   version = /^.*SoX v(\d*)\.(\d*)\.(\d*)/.match(sox_version) || []
+
+    #   if (version.size > 0) && (version[1].to_i < 14) || ((version[1].to_i == 14) && (version[2].to_i < 1))
+    #     self.sox_16_bits = '-w'
+    #     self.sox_8_bits = '-b'
+    #   else
+    #     self.sox_16_bits = '-b 16'
+    #     self.sox_8_bits = '-b 8'
+    #   end
+    # end
 
     def self.extended(base)
       base.reset!
