@@ -63,7 +63,13 @@ module AudioMonster
 
     def self.included(base)
 
-      attr_accessor :current_options
+      def current_options
+        @current_options ||= {}
+      end
+
+      def current_options=(opts)
+        @current_options = opts
+      end
 
       VALID_OPTIONS_KEYS.each do |key|
         define_method "#{key}=" do |arg|
@@ -103,16 +109,11 @@ module AudioMonster
     end
 
     def check_binaries
-      BINARIES_KEYS.each do |bin|
-        unless find_executable(bin.to_s)
-          puts "audio_monster: Can't find '#{bin}'."
-        end
-      end
+      BINARIES_KEYS.each { |bin| find_executable(bin.to_s) }
     end
 
     # Reset configuration options to their defaults
     def reset!
-      @options = {}
       self.debug   = ENV['DEBUG']
       self.logger  = Logger.new(STDOUT)
       self.bin_dir = nil
