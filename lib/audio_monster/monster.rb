@@ -9,14 +9,17 @@ require 'logger'
 require 'nu_wav'
 require 'tempfile'
 require 'mimemagic'
+require 'active_support/all'
 
 module AudioMonster
 
   class Monster
+    include Configuration
+    include ::NuWav
 
-  class <<self
-
-    include NuWav
+    def initialize(options={})
+      apply_configuration(options)
+    end
 
     def tone_detect(path, tone, threshold=0.05, min_time=0.5)
       ranges = []
@@ -921,6 +924,19 @@ module AudioMonster
       end
     end
 
+    def mpck_validation(audio_file_path, options)
+      errors= []
+      # validate using mpck
+      response = run_command("nice -n 19 #{MPCK} #{audio_file_path}")
+      response.split("\n").each { |o|
+        if ((o =~ MPCK_ERROR_RE) && !(o =~ MPCK_IGNORE_RE))
+          errors << "is not a valid mp2 file. The file is bad according to the 'mpck' audio check."
+        end
+      }
+
+      errors
+    end
+
     def method_missing(name, *args, &block)
       if name.to_s.starts_with?('encode_wav_pcm_from_')
         decode_audio(*args)
@@ -941,19 +957,5 @@ module AudioMonster
       ["Stereo", "JStereo"].include?(channel_mode) ? "j" : "m"
     end
 
-    # def mpck_validation(audio_file_path, options)
-    #   errors= []
-    #   # validate using mpck
-    #   response = run_command("nice -n 19 #{MPCK} #{audio_file_path}")
-    #   response.split("\n").each { |o|
-    #     if ((o =~ MPCK_ERROR_RE) && !(o =~ MPCK_IGNORE_RE))
-    #       errors << "is not a valid mp2 file. The file is bad according to the 'mpck' audio check."
-    #     end
-    #   }
-    #
-    #   errors
-    # end
-
-  end
   end
 end
