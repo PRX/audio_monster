@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ['andrew@beginsinwonder.com']
   spec.summary       = %q{audio_monster manipulates and transcodes audio}
   spec.description   = %q{audio_monster manipulates and transcodes audio}
-  spec.homepage      = ''
+  spec.homepage      = 'https://github.com/PRX/audio-monster'
   spec.license       = 'MIT'
 
   spec.files         = `git ls-files -z`.split("\x0")
