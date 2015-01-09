@@ -4,6 +4,10 @@ describe AudioMonster::Monster do
 
   let(:monster) { AudioMonster::Monster.new(logger: Logger.new('/dev/null')) }
 
+  before {
+    FileUtils.mkdir_p(out_dir)
+  }
+
   it 'can create an mp2 from a wav file' do
     # try to create the mp2
     monster.encode_mp2_from_wav(in_file('test_long.wav'), out_file('out.mp2')).wont_be_nil
