@@ -34,7 +34,7 @@ module AudioMonster
         normalized_wav_dat = create_temp_file(path + '.dat')
         normalized_wav_dat.close
 
-        command = "#{SOX} '#{path}' '#{normalized_wav_dat.path}' channels 1 rate 200 bandpass #{tone} 3 gain 6"
+        command = "#{bin(:sox)} '#{path}' '#{normalized_wav_dat.path}' channels 1 rate 200 bandpass #{tone} 3 gain 6"
         out, err = run_command(command)
         current_range = nil
 
@@ -86,7 +86,7 @@ module AudioMonster
         normalized_wav_dat = create_temp_file(path + '.dat')
         normalized_wav_dat.close
 
-        command = "#{SOX} '#{path}' '#{normalized_wav_dat.path}' channels 1 rate 1000 norm"
+        command = "#{bin(:sox)} '#{path}' '#{normalized_wav_dat.path}' channels 1 rate 1000 norm"
         out, err = run_command(command)
 
         current_range = nil
@@ -131,7 +131,7 @@ module AudioMonster
       check_local_file(original_path)
 
       logger.debug "encode_wav_pcm_from_mpeg: start"
-      command = "#{MADPLAY} -Q -i --output=wave:'#{wav_path}' '#{original_path}'"
+      command = "#{bin(:madplay)} -Q -i --output=wave:'#{wav_path}' '#{original_path}'"
 
       out, err = run_command(command)
 
@@ -146,7 +146,7 @@ module AudioMonster
       check_local_file(original_path)
 
       logger.debug "encode_wav_pcm_from_mpeg: start"
-      command = "#{FLAC} -s -f --decode '#{original_path}' --output-name='#{wav_path}'"
+      command = "#{bin(:flac)} -s -f --decode '#{original_path}' --output-name='#{wav_path}'"
       out, err = run_command(command)
 
       # check to see if there is a file created, or don't go on.
@@ -172,7 +172,7 @@ module AudioMonster
       channels = options[:channels] ? options[:channels].to_i : 2
       sample_rate = options[:sample_rate] ? options[:sample_rate].to_i : 44100
       logger.debug "decode_audio: start"
-      command = "#{FFMPEG} -nostats -loglevel warning -vn -i '#{original_path}' -acodec pcm_s16le -ac #{channels} -ar #{sample_rate} -y -f wav '#{wav_path}'"
+      command = "#{bin(:ffmpeg)} -nostats -loglevel warning -vn -i '#{original_path}' -acodec pcm_s16le -ac #{channels} -ar #{sample_rate} -y -f wav '#{wav_path}'"
 
       out, err = run_command(command)
 
@@ -247,7 +247,7 @@ module AudioMonster
 
     def audio_file_info(path, flag)
       check_local_file(path)
-      out, err = run_command("#{SOXI} -V0 -#{flag} '#{path}'", :nice=>'n', :echo_return=>false)
+      out, err = run_command("#{bin(:soxi)} -V0 -#{flag} '#{path}'", :nice=>'n', :echo_return=>false)
       out.chomp
     end
 
@@ -295,7 +295,7 @@ module AudioMonster
       end
 
       if mp2_sample_rate.to_i != fmt.sample_rate.to_i
-        prefix_command = "#{SOX} '#{original_path}' -t raw -r #{mp2_sample_rate} - | "
+        prefix_command = "#{bin(:sox)} '#{original_path}' -t raw -r #{mp2_sample_rate} - | "
         input_path = '-'
         raw_input = '--raw-input'
       end
@@ -340,7 +340,7 @@ module AudioMonster
       input_options = "#{raw_input} #{sample_rate} #{sample_bits} #{channels}"
       output_options = "#{channel_mode} #{bit_rate} #{downmix} #{protect} #{copyright} #{original} #{emphasis}"
 
-      command = "#{prefix_command} #{TWOLAME} -t 0 #{input_options} #{output_options} #{input_path} '#{mp2_path}'"
+      command = "#{prefix_command} #{bin(:twolame)} -t 0 #{input_options} #{output_options} #{input_path} '#{mp2_path}'"
       out, err = run_command(command)
       unless out.split("\n").last =~ TWOLAME_SUCCESS_RE
         raise "encode_mp2_from_wav - twolame response on transcoding was not recognized as a success, #{out}, #{err}"
@@ -397,7 +397,7 @@ module AudioMonster
       # output to wav (-t wav) has a warning
       # '/usr/local/bin/sox wav: Length in output .wav header will be wrong since can't seek to fix it'
       # that messsage can safely be ignored, wa output is easier/safer for lame to recognize, so worth ignoring this message
-      prefix_command = "#{SOX} '#{original_path}' -t wav #{resample} #{downmix} - | "
+      prefix_command = "#{bin(:sox)} '#{original_path}' -t wav #{resample} #{downmix} - | "
 
       kbps = if options[:per_channel_bit_rate]
         options[:per_channel_bit_rate].to_i * ((mode == 'm') ? 1 : 2)
@@ -421,7 +421,7 @@ module AudioMonster
       ##
       output_options = "#{channel_mode} #{bit_rate}"
 
-      command = "#{prefix_command} #{LAME} -S #{output_options} #{input_path} '#{mp3_path}'"
+      command = "#{prefix_command} #{bin(:lame)} -S #{output_options} #{input_path} '#{mp3_path}'"
 
       out, err = run_command(command)
 
@@ -488,7 +488,7 @@ module AudioMonster
 
       bit_rate = (MP3_BITRATES.include?(kbps) ? kbps : 96).to_s + "k"
 
-      command = "#{FFMPEG} -nostats -loglevel warning -vn -i '#{original_path}' -acodec libvorbis -ac #{channels} -ar #{sample_rate} -ab #{bit_rate} -y -f ogg '#{result_path}'"
+      command = "#{bin(:ffmpeg)} -nostats -loglevel warning -vn -i '#{original_path}' -acodec libvorbis -ac #{channels} -ar #{sample_rate} -ab #{bit_rate} -y -f ogg '#{result_path}'"
 
       out, err = run_command(command)
 
@@ -504,7 +504,7 @@ module AudioMonster
       start_at = get_datetime_for_option(options[:start_at])
       end_at = get_datetime_for_option(options[:end_at])
 
-      wav_wrapped_mpeg = WaveFile.from_mpeg(mpeg_path)
+      wav_wrapped_mpeg = NuWav::WaveFile.from_mpeg(mpeg_path)
       cart = wav_wrapped_mpeg.chunks[:cart]
       cart.title = options[:title] || File.basename(mpeg_path)
       cart.artist = options[:artist]
@@ -571,7 +571,7 @@ module AudioMonster
       wav_info = info_for_wav(wav_path)
       logger.debug "slice_wav: wav_info:#{wav_info.inspect}"
 
-      command = "#{SOX} -t wav '#{wav_path}' -t wav '#{out_path}' trim #{start} #{length}"
+      command = "#{bin(:sox)} -t wav '#{wav_path}' -t wav '#{out_path}' trim #{start} #{length}"
       out, err = run_command(command)
       response = out + err
       response.split("\n").each{ |out| raise("slice_wav: cut file error: '#{response}' on:\n #{command}") if out =~ SOX_ERROR_RE }
@@ -593,7 +593,7 @@ module AudioMonster
       channels = wav_info[:channel_mode] == 'Mono' ? 1 : 2
       sample_rate = wav_info[:sample_rate]
 
-      command = "#{SOX} -t wav '#{wav_path}' -t raw -s #{SOX_16_BITS} -c #{channels} - trim 0 #{new_length} | #{SOX} -t raw -r #{sample_rate} -s #{SOX_16_BITS} -c #{channels} - -t wav '#{out_path}' fade h 0 #{new_length} #{fade_length}"
+      command = "#{bin(:sox)} -t wav '#{wav_path}' -t raw -s -b 16 -c #{channels} - trim 0 #{new_length} | #{bin(:sox)} -t raw -r #{sample_rate} -s -b 16 -c #{channels} - -t wav '#{out_path}' fade h 0 #{new_length} #{fade_length}"
       out, err = run_command(command)
       response = out + err
       response.split("\n").each{ |out| raise("cut_wav: cut file error: '#{response}' on:\n #{command}") if out =~ SOX_ERROR_RE }
@@ -616,7 +616,7 @@ module AudioMonster
           concat_file.close
 
           concat_path = concat_file.path
-          command = "#{SOX} -t wav #{path} -t wav -c #{channels} -r #{sample_rate} '#{concat_path}'"
+          command = "#{bin(:sox)} -t wav #{path} -t wav -c #{channels} -r #{sample_rate} '#{concat_path}'"
           out, err = run_command(command)
           response = out + err
           response.split("\n").each{ |out| raise("concat_wavs: create temp file error: '#{response}' on:\n #{command}") if out =~ SOX_ERROR_RE }
@@ -624,7 +624,7 @@ module AudioMonster
         end
         cmd << "-t wav '#{concat_path}' "
       }
-      command = "#{SOX} #{concat_paths} -t wav '#{out_path}'"
+      command = "#{bin(:sox)} #{concat_paths} -t wav '#{out_path}'"
       out, err = run_command(command)
 
       response = out + err
@@ -656,13 +656,13 @@ module AudioMonster
         append_file.close
 
         # create the wav to append
-        command = "#{SOX} -t wav '#{append_wav_path}' -t raw -s #{SOX_16_BITS} -c #{channels} - trim 0 #{append_length} | #{SOX} -t raw -r #{sample_rate} -s #{SOX_16_BITS} -c #{channels} - -t raw - fade h 0 #{append_length} #{append_fade_length} | #{SOX} -t raw -r #{sample_rate} -s #{SOX_16_BITS} -c #{channels} - -t wav '#{append_file.path}' pad 1 0"
+        command = "#{bin(:sox)} -t wav '#{append_wav_path}' -t raw -s -b 16 -c #{channels} - trim 0 #{append_length} | #{bin(:sox)} -t raw -r #{sample_rate} -s -b 16 -c #{channels} - -t raw - fade h 0 #{append_length} #{append_fade_length} | #{bin(:sox)} -t raw -r #{sample_rate} -s -b 16 -c #{channels} - -t wav '#{append_file.path}' pad 1 0"
         out, err = run_command(command)
         response = out + err
         response.split("\n").each{ |out| raise("append_wav_to_wav: create append file error: '#{response}' on:\n #{command}") if out =~ SOX_ERROR_RE }
 
         # append the files to out_file
-        command = "#{SOX} -t wav '#{wav_path}' -t wav '#{append_file.path}' -t wav '#{out_path}'"
+        command = "#{bin(:sox)} -t wav '#{wav_path}' -t wav '#{append_file.path}' -t wav '#{out_path}'"
         out, err = run_command(command)
         response = out + err
         response.split("\n").each{ |out| raise("append_wav_to_wav: create append file error: '#{response}' on:\n #{command}") if out =~ SOX_ERROR_RE }
@@ -694,13 +694,13 @@ module AudioMonster
         append_file.close
 
         # create  the mp3 to append
-        command = "#{MADPLAY} -q -o wave:- '#{mp3_path}' - | #{SOX} -t wav - -t raw -s #{SOX_16_BITS} -c #{channels} - trim 0 #{append_length} | #{SOX} -t raw -r #{sample_rate} -s #{SOX_16_BITS} -c #{channels} - -t wav - fade h 0 #{append_length} #{append_fade_length} | #{SOX} -t wav - -t wav '#{append_file.path}' pad 1 0"
+        command = "#{bin(:madplay)} -q -o wave:- '#{mp3_path}' - | #{bin(:sox)} -t wav - -t raw -s -b 16 -c #{channels} - trim 0 #{append_length} | #{bin(:sox)} -t raw -r #{sample_rate} -s -b 16 -c #{channels} - -t wav - fade h 0 #{append_length} #{append_fade_length} | #{bin(:sox)} -t wav - -t wav '#{append_file.path}' pad 1 0"
         out, err = run_command(command)
         response = out + err
         response.split("\n").each{ |out| raise("append_mp3_to_wav: create append file error: '#{response}' on:\n #{command}") if out =~ SOX_ERROR_RE }
 
         # append the files to out_filew
-        command = "#{SOX} -t wav '#{wav_path}' -t wav '#{append_file.path}' -t wav '#{out_path}'"
+        command = "#{bin(:sox)} -t wav '#{wav_path}' -t wav '#{append_file.path}' -t wav '#{out_path}'"
         out, err = run_command(command)
         response = out + err
         response.split("\n").each{ |out| raise("append_mp3_to_wav: create append file error: '#{response}' on:\n #{command}") if out =~ SOX_ERROR_RE }
@@ -714,7 +714,7 @@ module AudioMonster
 
     def normalize_wav(wav_path, out_path, level=-9)
       logger.info "normalize_wav: wav_path:#{wav_path}, level:#{level}"
-      command = "#{SOX} -t wav '#{wav_path}' -t wav '#{out_path}' gain -n #{level.to_i}"
+      command = "#{bin(:sox)} -t wav '#{wav_path}' -t wav '#{out_path}' gain -n #{level.to_i}"
       out, err = run_command(command)
       response = out + err
       response.split("\n").each{ |out| raise("normalize_wav: normalize audio file error: '#{response}' on:\n #{command}") if out =~ SOX_ERROR_RE }
@@ -743,20 +743,10 @@ module AudioMonster
     def create_temp_file(base_file_name=nil, bin_mode=true)
       file_name = File.basename(base_file_name)
       file_ext = File.extname(base_file_name)
-      FileUtils.mkdir_p(TMP_FILE_DIR) unless File.exists?(TMP_FILE_DIR)
-      tmp = Tempfile.new([file_name, file_ext], TMP_FILE_DIR)
+      FileUtils.mkdir_p(tmp_dir) unless File.exists?(tmp_dir)
+      tmp = Tempfile.new([file_name, file_ext], tmp_dir)
       tmp.binmode if bin_mode
       tmp
-    end
-
-    def logger=(l)
-      @@logger = l
-    end
-
-    def logger
-      (@@logger = Rails.logger unless defined?(@@logger)) if defined?(Rails.logger)
-      @@logger = Logger.new(STDOUT) unless defined?(@@logger) && @@logger
-      @@logger
     end
 
     protected
@@ -864,7 +854,7 @@ module AudioMonster
     def mp3val_validation(audio_file_path, options)
       warning = false
       error = false
-      out, err = run_command("#{MP3VAL} -si '#{audio_file_path}'", :echo_return=>false)
+      out, err = run_command("#{bin(:mp3val)} -si '#{audio_file_path}'", :echo_return=>false)
       lines = out.split("\n")
       lines.each { |o|
         if (o =~ MP3VAL_IGNORE_RE)
@@ -927,7 +917,7 @@ module AudioMonster
     def mpck_validation(audio_file_path, options)
       errors= []
       # validate using mpck
-      response = run_command("nice -n 19 #{MPCK} #{audio_file_path}")
+      response = run_command("nice -n 19 #{bin(:mpck)} #{audio_file_path}")
       response.split("\n").each { |o|
         if ((o =~ MPCK_ERROR_RE) && !(o =~ MPCK_IGNORE_RE))
           errors << "is not a valid mp2 file. The file is bad according to the 'mpck' audio check."
