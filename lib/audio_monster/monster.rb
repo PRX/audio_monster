@@ -19,6 +19,7 @@ module AudioMonster
 
     def initialize(options={})
       apply_configuration(options)
+      check_binaries if ENV['AUDIO_MONSTER_DEBUG']
     end
 
     def tone_detect(path, tone, threshold=0.05, min_time=0.5)

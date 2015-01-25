@@ -93,8 +93,17 @@ module AudioMonster
       yield self
     end
 
+    def set_mkmf_log(logfile=File::NULL)
+      MakeMakefile::Logging.instance_variable_set(:@logfile, logfile)
+    end
+
     def check_binaries
+      old_mkmf_log = MakeMakefile::Logging.instance_variable_get(:@logfile)
+      set_mkmf_log
+
       BINARIES_KEYS.each { |bin| find_executable(bin.to_s) }
+
+      set_mkmf_log(old_mkmf_log)
     end
 
     # Reset configuration options to their defaults
@@ -137,7 +146,6 @@ module AudioMonster
 
     def self.extended(base)
       base.reset!
-      base.check_binaries
     end
   end
 end
