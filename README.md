@@ -5,7 +5,9 @@ It wraps a number of different command line binaries such as sox, lame, flac, tw
 
 ## Dependencies
 
-The following binary tools are required. They are available from most OS package managers. E.e. for OS X use homebrew:
+The following binary tools are required. They are available via most OS package managers. 
+
+For OS X use homebrew:
 
 ```
 brew install lame
@@ -17,7 +19,9 @@ brew install mp3val
 brew install ffmpeg
 ```
 
-For Redhat/CentOS use yum. NOTE that some multimedia RPMs are available only via particular repositories. See e.g.
+For Redhat/CentOS use yum. 
+
+NOTE that some multimedia RPMs are available only via particular repositories. See e.g.
 http://wiki.centos.org/TipsAndTricks/MultimediaOnCentOS7
 
 ```
