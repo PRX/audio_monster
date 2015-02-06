@@ -2,6 +2,7 @@
 
 require "audio_monster/version"
 
+require 'active_support/all'
 require 'open3'
 require 'timeout'
 require 'mp3info'
@@ -9,7 +10,7 @@ require 'logger'
 require 'nu_wav'
 require 'tempfile'
 require 'mimemagic'
-require 'active_support/all'
+require 'digest/sha2'
 
 module AudioMonster
 
@@ -741,9 +742,14 @@ module AudioMonster
     alias validate_mp2 validate_mpeg
     alias validate_mp3 validate_mpeg
 
+    MAX_FILENAME_LENGTH = 160
+    MAX_EXTENSION_LENGTH = 6
+
     def create_temp_file(base_file_name=nil, bin_mode=true)
       file_name = File.basename(base_file_name)
-      file_ext = File.extname(base_file_name)
+      file_name = Digest::SHA256.hexdigest(base_file_name) if file_name.length > MAX_FILENAME_LENGTH
+      file_ext = File.extname(base_file_name)[0, MAX_EXTENSION_LENGTH]
+
       FileUtils.mkdir_p(tmp_dir) unless File.exists?(tmp_dir)
       tmp = Tempfile.new([file_name, file_ext], tmp_dir)
       tmp.binmode if bin_mode

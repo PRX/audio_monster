@@ -108,4 +108,10 @@ describe AudioMonster::Monster do
     slice_wav.duration.must_equal 5
   end
 
+  it 'can create a temp file with a really long name' do
+    base_file_name = ('abc' * 100) + '.extension'
+    file = AudioMonster.create_temp_file(base_file_name)
+    File.basename(file.path)[0, 64].must_equal Digest::SHA256.hexdigest(base_file_name)
+    File.extname(file.path).must_equal '.exten'
+  end
 end
