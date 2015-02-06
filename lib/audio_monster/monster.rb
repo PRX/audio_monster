@@ -10,6 +10,7 @@ require 'nu_wav'
 require 'tempfile'
 require 'mimemagic'
 require 'active_support/all'
+require 'digest'
 
 module AudioMonster
 
@@ -745,7 +746,8 @@ module AudioMonster
       file_name = File.basename(base_file_name)
       file_ext = File.extname(base_file_name)
       FileUtils.mkdir_p(tmp_dir) unless File.exists?(tmp_dir)
-      tmp = Tempfile.new([file_name, file_ext], tmp_dir)
+      safe_file_name = Digest::SHA256.hexdigest(file_name)
+      tmp = Tempfile.new([safe_file_name, file_ext], tmp_dir)
       tmp.binmode if bin_mode
       tmp
     end
