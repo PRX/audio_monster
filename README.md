@@ -19,7 +19,7 @@ brew install mp3val
 brew install ffmpeg
 ```
 
-For Redhat/CentOS use yum. 
+For Redhat/CentOS use yum:
 
 NOTE that some multimedia RPMs are available only via particular repositories. See e.g.
 http://wiki.centos.org/TipsAndTricks/MultimediaOnCentOS7
