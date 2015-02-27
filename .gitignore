@@ -11,5 +11,4 @@
 *.so
 *.o
 *.a
-mkmf.log
 /test/tmp/
