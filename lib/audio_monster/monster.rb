@@ -249,7 +249,7 @@ module AudioMonster
 
     def audio_file_info(path, flag)
       check_local_file(path)
-      out, err = run_command("#{bin(:soxi)} -V0 -#{flag} '#{path}'", :nice=>'n', :echo_return=>false)
+      out, err = run_command("#{bin(:soxi)} -V0 -#{flag} '#{path}'", nice: 'n', echo_return: false)
       out.chomp
     end
 
