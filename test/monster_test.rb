@@ -8,6 +8,15 @@ describe AudioMonster::Monster do
     FileUtils.mkdir_p(out_dir)
   }
 
+  it 'measures loudness' do
+    info = monster.loudness_info(in_file('test_long.wav'))
+    ['integrated_loudness', 'loudness_range', 'true_peak'].
+    each { |t| info[t].wont_be_nil }
+    info['integrated_loudness']['i'].must_equal -18.5
+    info['loudness_range']['lra'].must_equal 7.1
+    info['true_peak']['peak'].must_equal -2.1
+  end
+
   it 'can create an mp2 from a wav file' do
     # try to create the mp2
     monster.encode_mp2_from_wav(in_file('test_long.wav'), out_file('out.mp2')).wont_be_nil

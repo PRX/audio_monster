@@ -23,6 +23,36 @@ module AudioMonster
       check_binaries if ENV['AUDIO_MONSTER_DEBUG']
     end
 
+  # Integrated loudness:
+  #   I:         -18.5 LUFS
+  #   Threshold: -28.6 LUFS
+
+  # Loudness range:
+  #   LRA:         7.1 LU
+  #   Threshold: -38.7 LUFS
+  #   LRA low:   -23.6 LUFS
+  #   LRA high:  -16.5 LUFS
+
+  # True peak:
+  #   Peak:       -2.1 dBFS
+    def loudness_info(path)
+      command = "#{bin(:ffmpeg)} -nostats -vn -i '#{path}' -y -filter_complex ebur128=peak=true -f null - 2>&1 | tail -12"
+      out, err = run_command(command, echo_return: false)
+
+      lines = out.split("\n").map(&:strip).compact.map { |o| o.split(":").map(&:strip) }
+      group = nil
+      info = {}
+      lines.each do |i|
+        if i.length == 1 && i[0].length > 0
+          group = i[0].downcase.gsub(' ', '_')
+          info[group] ||= {}
+        elsif i.length == 2
+          info[group][i[0].downcase.gsub(' ', '_')] = i[1].to_f
+        end
+      end
+      info
+    end
+
     def tone_detect(path, tone, threshold=0.05, min_time=0.5)
       ranges = []
 
