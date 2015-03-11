@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
 
 module AudioMonster
-  VERSION = "1.0.3"
+  VERSION = "1.0.4"
 end
