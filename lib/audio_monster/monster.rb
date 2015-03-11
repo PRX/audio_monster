@@ -44,10 +44,11 @@ module AudioMonster
       info = {}
       lines.each do |i|
         if i.length == 1 && i[0].length > 0
-          group = i[0].downcase.gsub(' ', '_')
+          group = i[0].downcase.gsub(' ', '_').to_sym
           info[group] ||= {}
         elsif i.length == 2
-          info[group][i[0].downcase.gsub(' ', '_')] = i[1].to_f
+          key = i[0].downcase.gsub(' ', '_').to_sym
+          info[group][key] = i[1].to_f
         end
       end
       info
