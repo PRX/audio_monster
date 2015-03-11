@@ -12,3 +12,4 @@
 *.o
 *.a
 /test/tmp/
+.ruby-version
