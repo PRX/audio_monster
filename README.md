@@ -32,6 +32,7 @@ yum install twolame
 yum install madplay
 yum install mp3val
 yum install ffmpeg
+yum install libsndfile-devel libsndfile-utils
 ```
 
 ## Installation
