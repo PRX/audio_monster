@@ -2,6 +2,7 @@
 
 require "audio_monster/version"
 
+require 'active_support/all'
 require 'open3'
 require 'timeout'
 require 'mp3info'
@@ -9,8 +10,7 @@ require 'logger'
 require 'nu_wav'
 require 'tempfile'
 require 'mimemagic'
-require 'active_support/all'
-require 'digest'
+require 'digest/sha2'
 
 module AudioMonster
 
@@ -21,6 +21,37 @@ module AudioMonster
     def initialize(options={})
       apply_configuration(options)
       check_binaries if ENV['AUDIO_MONSTER_DEBUG']
+    end
+
+  # Integrated loudness:
+  #   I:         -18.5 LUFS
+  #   Threshold: -28.6 LUFS
+
+  # Loudness range:
+  #   LRA:         7.1 LU
+  #   Threshold: -38.7 LUFS
+  #   LRA low:   -23.6 LUFS
+  #   LRA high:  -16.5 LUFS
+
+  # True peak:
+  #   Peak:       -2.1 dBFS
+    def loudness_info(path)
+      command = "#{bin(:ffmpeg)} -nostats -vn -i '#{path}' -y -filter_complex ebur128=peak=true -f null - 2>&1 | tail -12"
+      out, err = run_command(command, echo_return: false)
+
+      lines = out.split("\n").map(&:strip).compact.map { |o| o.split(":").map(&:strip) }
+      group = nil
+      info = {}
+      lines.each do |i|
+        if i.length == 1 && i[0].length > 0
+          group = i[0].downcase.gsub(' ', '_').to_sym
+          info[group] ||= {}
+        elsif i.length == 2
+          key = i[0].downcase.gsub(' ', '_').to_sym
+          info[group][key] = i[1].to_f
+        end
+      end
+      info
     end
 
     def tone_detect(path, tone, threshold=0.05, min_time=0.5)
@@ -249,7 +280,7 @@ module AudioMonster
 
     def audio_file_info(path, flag)
       check_local_file(path)
-      out, err = run_command("#{bin(:soxi)} -V0 -#{flag} '#{path}'", :nice=>'n', :echo_return=>false)
+      out, err = run_command("#{bin(:soxi)} -V0 -#{flag} '#{path}'", nice: 'n', echo_return: false)
       out.chomp
     end
 
@@ -742,9 +773,14 @@ module AudioMonster
     alias validate_mp2 validate_mpeg
     alias validate_mp3 validate_mpeg
 
+    MAX_FILENAME_LENGTH = 160
+    MAX_EXTENSION_LENGTH = 6
+
     def create_temp_file(base_file_name=nil, bin_mode=true)
       file_name = File.basename(base_file_name)
-      file_ext = File.extname(base_file_name)
+      file_name = Digest::SHA256.hexdigest(base_file_name) if file_name.length > MAX_FILENAME_LENGTH
+      file_ext = File.extname(base_file_name)[0, MAX_EXTENSION_LENGTH]
+
       FileUtils.mkdir_p(tmp_dir) unless File.exists?(tmp_dir)
       safe_file_name = Digest::SHA256.hexdigest(file_name)
       tmp = Tempfile.new([safe_file_name, file_ext], tmp_dir)

@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 
-require 'mkmf'
 require 'logger'
+require 'ptools'
 
 module AudioMonster
 
@@ -93,17 +93,17 @@ module AudioMonster
       yield self
     end
 
-    def set_mkmf_log(logfile=File::NULL)
-      MakeMakefile::Logging.instance_variable_set(:@logfile, logfile)
+    def check_binaries
+      BINARIES_KEYS.each { |bin| find_executable(bin.to_s) }
     end
 
-    def check_binaries
-      old_mkmf_log = MakeMakefile::Logging.instance_variable_get(:@logfile)
-      set_mkmf_log
-
-      BINARIES_KEYS.each { |bin| find_executable(bin.to_s) }
-
-      set_mkmf_log(old_mkmf_log)
+    def find_executable(bin)
+      which = File.which(bin)
+      if which
+        puts "  #{bin}:    #{which}"
+      else
+        puts "X #{bin}:    MISSING"
+      end
     end
 
     # Reset configuration options to their defaults

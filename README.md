@@ -3,6 +3,38 @@
 AudioMonster manipulates and transcodes audio.
 It wraps a number of different command line binaries such as sox, lame, flac, twolame, and ffmpeg.
 
+## Dependencies
+
+The following binary tools are required. They are available via most OS package managers. 
+
+For OS X use homebrew:
+
+```
+brew install lame
+brew install flac
+brew install sox
+brew install twolame --frontend
+brew install madplay
+brew install mp3val
+brew install ffmpeg
+```
+
+For Redhat/CentOS use yum:
+
+NOTE that some multimedia RPMs are available only via particular repositories. See e.g.
+http://wiki.centos.org/TipsAndTricks/MultimediaOnCentOS7
+
+```
+yum install lame
+yum install flac
+yum install sox 
+yum install twolame 
+yum install madplay
+yum install mp3val
+yum install ffmpeg
+yum install libsndfile-devel libsndfile-utils
+```
+
 ## Installation
 
 Add this line to your application's Gemfile:
