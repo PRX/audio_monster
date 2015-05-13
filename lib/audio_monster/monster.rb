@@ -782,8 +782,7 @@ module AudioMonster
       file_ext = File.extname(base_file_name)[0, MAX_EXTENSION_LENGTH]
 
       FileUtils.mkdir_p(tmp_dir) unless File.exists?(tmp_dir)
-      safe_file_name = Digest::SHA256.hexdigest(file_name)
-      tmp = Tempfile.new([safe_file_name, file_ext], tmp_dir)
+      tmp = Tempfile.new([file_name, file_ext], tmp_dir)
       tmp.binmode if bin_mode
       tmp
     end
