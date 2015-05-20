@@ -19,7 +19,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_runtime_dependency 'nu_wav'
-  spec.add_runtime_dependency 'mp3info'
+  spec.add_runtime_dependency 'ruby-mp3info', '~> 0.8.6'
   spec.add_runtime_dependency 'mimemagic'
   spec.add_runtime_dependency 'activesupport'
   spec.add_runtime_dependency 'ptools'
