@@ -2,5 +2,7 @@ language: ruby
 rvm:
   - "2.2.1"
 before_install:
+  - sudo add-apt-repository ppa:kirillshkrogalev/ffmpeg-next
   - sudo apt-get update -qq
-  - sudo apt-get install -qq libsndfile1-dev imagemagick libsox-fmt-all lame mp3val sox madplay twolame flac ffmpeg
+  - sudo apt-get install -qq libsndfile1-dev imagemagick libsox-fmt-all lame mp3val sox madplay twolame flac
+  - sudo apt-get install -qq ffmpeg
