@@ -832,7 +832,7 @@ module AudioMonster
       end
 
       if options[:channel_mode]
-        cm_list = options[:channel_mode].to_a
+        cm_list = Array(options[:channel_mode])
         add_error(:channel_mode, "channel mode must be one of (#{cm_list.to_sentence})") unless cm_list.include?(info.channel_mode)
       end
 
@@ -847,7 +847,7 @@ module AudioMonster
         sample_rate = 44100
         op = ">="
         mpeg_sample_rate = info.samplerate.to_i
-        if options[:sample_rate].match(' ')
+        if options[:sample_rate].to_s.match(' ')
           op, sample_rate = options[:sample_rate].split(' ')
           sample_rate = sample_rate.to_i
           op = valid_operator(op)
@@ -861,7 +861,7 @@ module AudioMonster
         bit_rate = 128
         op = ">="
         mpeg_bit_rate = info.bitrate.to_i
-        if options[:bit_rate].match(' ')
+        if options[:bit_rate].to_s.match(' ')
           op, bit_rate = options[:bit_rate].split(' ')
           bit_rate = bit_rate.to_i
           op = valid_operator(op)
@@ -877,7 +877,7 @@ module AudioMonster
         mpeg_channels = "Single Channel" == info.channel_mode ? 1 : 2
         mpeg_per_channel_bit_rate = info.bitrate.to_i / mpeg_channels
 
-        if options[:per_channel_bit_rate].match(' ')
+        if options[:per_channel_bit_rate].to_s.match(' ')
           op, per_channel_bit_rate = options[:per_channel_bit_rate].split(' ')
           per_channel_bit_rate = per_channel_bit_rate.to_i
           op = valid_operator(op)
