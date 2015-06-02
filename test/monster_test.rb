@@ -117,6 +117,12 @@ describe AudioMonster::Monster do
     slice_wav.duration.must_equal 5
   end
 
+  it 'can cut a section from the top of an audio file' do
+    monster.cut_wav(in_file('test_long.wav'), out_file('cut.wav'), '5', 1).wont_be_nil
+    cut_wav = NuWav::WaveFile.parse(out_file('cut.wav'))
+    cut_wav.duration.must_equal 5
+  end
+
   it 'can create a temp file with a really long name' do
     base_file_name = ('abc' * 100) + '.extension'
     file = AudioMonster.create_temp_file(base_file_name)

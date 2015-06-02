@@ -619,8 +619,8 @@ module AudioMonster
       wav_info = info_for_wav(wav_path)
       logger.debug "cut_wav: wav_info:#{wav_info.inspect}"
 
-      new_length = [wav_info[:length].to_i, length].min
-      fade_length = [wav_info[:length].to_i, fade].min
+      new_length = [wav_info[:length].to_f, length.to_f].min
+      fade_length = [wav_info[:length].to_f, fade.to_f].min
 
       # find out if the wav file is stereo or mono as this needs to match the starting wav
       channels = wav_info[:channel_mode] == 'Mono' ? 1 : 2
