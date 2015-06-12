@@ -84,7 +84,6 @@ describe AudioMonster::Monster do
     info[:content_type].must_equal "audio/ogg"
   end
 
-
   it 'should create a wav wrapped mp2' do
     start_at = '2010-06-19T00:00:00-04:00'
     end_at = DateTime.parse(start_at) + 6.days
@@ -128,5 +127,56 @@ describe AudioMonster::Monster do
     file = AudioMonster.create_temp_file(base_file_name)
     File.basename(file.path)[0, 64].must_equal Digest::SHA256.hexdigest(base_file_name)
     File.extname(file.path).must_equal '.exten'
+  end
+
+  describe 'test info' do
+    let(:audio_files) do
+      {
+        'test_short.mp2' => ['mp2', 5, 2, 48000, 256],
+        'test_long.mp3' => ['mp3', 48, 1, 44100, 128],
+        'test.ogg' => ['ogg', 12, 2, 44100, 128],
+        'test.flac' => ['flac', 15, 2, 44100, 246],
+        'test_short.wav' => ['wav', 5, 2, 48000, 1536]
+      }
+    end
+
+    it 'can get the ffprobe info on a file' do
+      audio_files.keys.each do |file|
+        info = monster.audio_file_info_ffprobe(in_file(file))
+        info.wont_be_nil
+        info['streams'].wont_be_nil
+        info['format'].wont_be_nil
+      end
+    end
+
+    it 'can get the format of a file' do
+      audio_files.keys.each do |file|
+        monster.audio_file_format(in_file(file)).must_equal audio_files[file][0]
+      end
+    end
+
+    it 'can get the duration of a file' do
+      audio_files.keys.each do |file|
+        monster.audio_file_duration(in_file(file)).to_i.must_equal audio_files[file][1]
+      end
+    end
+
+    it 'can get the number of channels for a file' do
+      audio_files.keys.each do |file|
+        monster.audio_file_channels(in_file(file)).must_equal audio_files[file][2]
+      end
+    end
+
+    it 'can get the sample rate of a file' do
+      audio_files.keys.each do |file|
+        monster.audio_file_sample_rate(in_file(file)).must_equal audio_files[file][3]
+      end
+    end
+
+    it 'can get the bit rate of a file' do
+      audio_files.keys.each do |file|
+        monster.audio_file_bit_rate(in_file(file)).must_equal audio_files[file][4]
+      end
+    end
   end
 end

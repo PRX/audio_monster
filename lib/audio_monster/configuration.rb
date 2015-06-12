@@ -35,7 +35,7 @@ module AudioMonster
 
     AES46_2002_TIME_FORMAT = '%H:%M:%S'
 
-    BINARIES_KEYS = [:file, :ffmpeg, :flac, :lame, :mpck, :mp3val, :sox, :soxi, :madplay, :twolame].freeze
+    BINARIES_KEYS = [:file, :ffmpeg, :ffprobe, :flac, :lame, :mpck, :mp3val, :sox, :soxi, :madplay, :twolame].freeze
 
     VALID_OPTIONS_KEYS = ([
       :logger,
@@ -114,6 +114,7 @@ module AudioMonster
       self.tmp_dir = '/tmp/audio_monster'
       self.file    = 'file'
       self.ffmpeg  = 'ffmpeg'
+      self.ffprobe = 'ffprobe'
       self.flac    = 'flac'
       self.lame    = 'lame'
       self.mpck    = 'mpck'

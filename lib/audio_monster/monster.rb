@@ -11,6 +11,7 @@ require 'nu_wav'
 require 'tempfile'
 require 'mimemagic'
 require 'digest/sha2'
+require 'bigdecimal'
 
 module AudioMonster
 
@@ -252,37 +253,73 @@ module AudioMonster
     end
 
     def info_for_audio(path)
+      info = audio_file_info_ffprobe(path)
       {
-        :size         => File.size(path),
-        :content_type => (MimeMagic.by_path(path) || MimeMagic.by_magic(path)).to_s,
-        :channel_mode => audio_file_channels(path) <= 1 ? 'Mono' : 'Stereo',
-        :bit_rate     => audio_file_bit_rate(path),
-        :length       => audio_file_duration(path),
-        :sample_rate  => audio_file_sample_rate(path)
+        size:         info['format']['size'].to_i,
+        content_type: (MimeMagic.by_path(path) || MimeMagic.by_magic(path)).to_s,
+        format:       audio_file_format(path, info),
+        channel_mode: audio_file_channels(path, info) <= 1 ? 'Mono' : 'Stereo',
+        bit_rate:     audio_file_bit_rate(path, info),
+        length:       audio_file_duration(path, info),
+        sample_rate:  audio_file_sample_rate(path, info)
       }
     end
 
-    def audio_file_duration(path)
-      audio_file_info(path, 'D').to_f
+    def audio_file_format(path, info = nil)
+      info ||= audio_file_info_ffprobe(path)
+      f = info['format']['format_name']
+      if f == 'mp3'
+        stream = info['streams'].detect { |s| s['codec_type'] == 'audio' }
+        f = stream['codec_name']
+      end
+      f.downcase
     end
 
-    def audio_file_channels(path)
-      audio_file_info(path, 'c').to_i
+    def audio_file_duration(path, info = nil)
+      # audio_file_info_soxi(path, 'D').to_f
+      info ||= audio_file_info_ffprobe(path)
+      info['format']['duration'].to_f
     end
 
-    def audio_file_sample_rate(path)
-      audio_file_info(path, 'r').to_i
+    def audio_file_channels(path, info = nil)
+      # audio_file_info_soxi(path, 'c').to_i
+      info ||= audio_file_info_ffprobe(path)
+      stream = info['streams'].detect { |s| s['codec_type'] == 'audio' }
+      stream['channels'].to_i
     end
 
-    def audio_file_bit_rate(path)
-      audio_file_info(path, 'B').to_i
+    def audio_file_sample_rate(path, info = nil)
+      # audio_file_info_soxi(path, 'r').to_i
+      info ||= audio_file_info_ffprobe(path)
+      stream = info['streams'].detect { |s| s['codec_type'] == 'audio' }
+      stream['sample_rate'].to_i
     end
 
-    def audio_file_info(path, flag)
+    def audio_file_bit_rate(path, info = nil)
+      # audio_file_info_soxi(path, 'B').to_i
+      info ||= audio_file_info_ffprobe(path)
+      stream = info['streams'].detect { |s| s['codec_type'] == 'audio' }
+      bit_rate = stream['bit_rate'] || info['format']['bit_rate']
+      (BigDecimal.new(bit_rate) / 1000).round
+    end
+
+    def audio_file_info_soxi(path, flag)
       check_local_file(path)
       out, err = run_command("#{bin(:soxi)} -V0 -#{flag} '#{path}'", nice: 'n', echo_return: false)
       out.chomp
     end
+
+    def audio_file_info_ffprobe(path)
+      check_local_file(path)
+      cmd = bin(:ffprobe) +
+        " -v quiet -print_format json -show_format -show_streams" +
+        " '#{path}'"
+      out, err = run_command(cmd, nice: 'n', echo_return: false)
+      json = out.chomp
+      JSON.parse(json)
+    end
+
+    alias audio_file_info audio_file_info_ffprobe
 
     # valid options
     # :sample_rate
@@ -984,6 +1021,5 @@ module AudioMonster
     def get_lame_channel_mode(channel_mode)
       ["Stereo", "JStereo"].include?(channel_mode) ? "j" : "m"
     end
-
   end
 end
