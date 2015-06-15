@@ -129,6 +129,13 @@ describe AudioMonster::Monster do
     File.extname(file.path).must_equal '.exten'
   end
 
+
+  it 'can get the format of a file with no extension' do
+    monster.file_content_type(in_file('an_mp3_no_ext')).must_equal 'audio/mpeg'
+    monster.content_type(in_file('an_mp3_no_ext')).must_equal 'audio/mpeg'
+  end
+
+
   describe 'test audio file info' do
     let(:audio_files) do
       {

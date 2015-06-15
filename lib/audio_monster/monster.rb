@@ -276,7 +276,9 @@ module AudioMonster
     alias info_for_mp3 info_for_mpeg
 
     def content_type(path)
-      mime_magic_content_type(path) || file_content_type(path)
+      ct = mime_magic_content_type(path)
+      ct = file_content_type(path) if (ct.nil? || ct.length == 0)
+      ct
     end
 
     def mime_magic_content_type(path)
