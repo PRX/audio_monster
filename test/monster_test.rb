@@ -28,13 +28,13 @@ describe AudioMonster::Monster do
 
   it 'can validate an mpeg audio file\'s attributes' do
     validations = {
-      :version=>2,
-      :layer=>3,
-      :channel_mode=>['Joint Stereo', 'Stereo'],
-      :channels=>2,
-      :sample_rate=>'<= 44000',
-      :bit_rate=>'< 100',
-      :per_channel_bit_rate=>'>= 256'
+      version: 2,
+      layer: 3,
+      channel_mode: ['Joint Stereo', 'Stereo'],
+      channels: 2,
+      sample_rate: '<= 44000',
+      bit_rate: '< 100',
+      per_channel_bit_rate: '>= 256'
     }
 
     errors, info = monster.validate_mpeg(in_file('test_long.mp2'), validations)
@@ -75,7 +75,7 @@ describe AudioMonster::Monster do
 
   it 'should get the length using soxi' do
     info = monster.info_for_mpeg(in_file('test_long.mp2'))
-    info[:length].must_equal 48
+    info[:length].to_i.must_equal 48
   end
 
   it 'should get info for ogg file' do
@@ -129,14 +129,14 @@ describe AudioMonster::Monster do
     File.extname(file.path).must_equal '.exten'
   end
 
-  describe 'test info' do
+  describe 'test audio file info' do
     let(:audio_files) do
       {
-        'test_short.mp2' => ['mp2', 5, 2, 48000, 256],
-        'test_long.mp3' => ['mp3', 48, 1, 44100, 128],
-        'test.ogg' => ['ogg', 12, 2, 44100, 128],
-        'test.flac' => ['flac', 15, 2, 44100, 246],
-        'test_short.wav' => ['wav', 5, 2, 48000, 1536]
+        'test_short.mp2' => ['mp2', 5, 2, 48000, 256, 'audio/mp2'],
+        'test_long.mp3' => ['mp3', 48, 1, 44100, 128, 'audio/mpeg'],
+        'test.ogg' => ['ogg', 12, 2, 44100, 128, 'audio/ogg'],
+        'test.flac' => ['flac', 15, 2, 44100, 246, 'audio/flac'],
+        'test_short.wav' => ['wav', 5, 2, 48000, 1536, 'audio/x-wav']
       }
     end
 
@@ -151,31 +151,36 @@ describe AudioMonster::Monster do
 
     it 'can get the format of a file' do
       audio_files.keys.each do |file|
-        monster.audio_file_format(in_file(file)).must_equal audio_files[file][0]
+        info = monster.info_for_audio(in_file(file))
+
+        info[:format].must_equal audio_files[file][0]
+        info[:length].to_i.must_equal audio_files[file][1]
+        info[:channels].must_equal audio_files[file][2]
+        info[:sample_rate].must_equal audio_files[file][3]
+        info[:bit_rate].must_equal audio_files[file][4]
+        info[:content_type].must_equal audio_files[file][5]
       end
     end
+  end
 
-    it 'can get the duration of a file' do
-      audio_files.keys.each do |file|
-        monster.audio_file_duration(in_file(file)).to_i.must_equal audio_files[file][1]
-      end
+  describe 'test audio file info' do
+
+    let(:other_files) do
+      {
+        'test.txt' => ['txt', 'text/plain', 6463],
+        'test.gif' => ['gif', 'image/gif', 708713],
+        'test.jpg' => ['jpg', 'image/jpeg', 823925],
+        'test.png' => ['png', 'image/png', 2035485]
+      }
     end
 
-    it 'can get the number of channels for a file' do
-      audio_files.keys.each do |file|
-        monster.audio_file_channels(in_file(file)).must_equal audio_files[file][2]
-      end
-    end
+    it 'gets the format, content type, and size' do
+      other_files.keys.each do |file|
+        info = monster.info_for(in_file(file))
 
-    it 'can get the sample rate of a file' do
-      audio_files.keys.each do |file|
-        monster.audio_file_sample_rate(in_file(file)).must_equal audio_files[file][3]
-      end
-    end
-
-    it 'can get the bit rate of a file' do
-      audio_files.keys.each do |file|
-        monster.audio_file_bit_rate(in_file(file)).must_equal audio_files[file][4]
+        info[:format].must_equal other_files[file][0]
+        info[:content_type].must_equal other_files[file][1]
+        info[:size].must_equal other_files[file][2]
       end
     end
   end

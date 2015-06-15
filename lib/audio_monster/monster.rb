@@ -19,6 +19,17 @@ module AudioMonster
     include Configuration
     include ::NuWav
 
+    # when we want to be sure a format string is chosen
+    # esp. when mimemagic has multiple options
+    COMMON_EXTENSIONS = {
+      'application/xml' => 'xml',
+      'audio/mpeg' => 'mp3',
+      'audio/mp4'  => 'm4a',
+      'audio/ogg'  => 'ogg',
+      'image/jpeg' => 'jpg',
+      'text/plain' => 'txt'
+    }
+
     def initialize(options={})
       apply_configuration(options)
       check_binaries if ENV['AUDIO_MONSTER_DEBUG']
@@ -215,54 +226,67 @@ module AudioMonster
       return [out, err]
     end
 
-    def info_for_mpeg(mpeg_path, info = nil)
-      logger.debug "info_for_mpeg: start"
-      length = audio_file_duration(mpeg_path)
-      info ||= Mp3Info.new(mpeg_path)
-      result = {
-        :size         => File.size(mpeg_path),
-        :content_type => 'audio/mpeg',
-        :channel_mode => info.channel_mode,
-        :bit_rate     => info.bitrate,
-        :length       => [info.length.to_i, length.to_i].max,
-        :sample_rate  => info.samplerate,
-        :version      => info.mpeg_version, # mpeg specific
-        :layer        => info.layer # mpeg specific
+    def info_for(path)
+      ct = content_type(path)
+      mm = MimeMagic.new(ct)
+      if respond_to?("info_for_#{mm.mediatype}")
+        send("info_for_#{mm.mediatype}", path)
+      else
+        basic_info_for_file(path)
+      end
+    end
+
+    def basic_info_for_file(path)
+      ct = content_type(path)
+      mm = MimeMagic.new(ct)
+      {
+        size: File.size(path),
+        content_type: ct,
+        format: common_extensions(ct) || mm.extensions.first
       }
+    end
 
-      # indicate this can be GC'd
-      info = nil
+    def common_extensions(content_type)
+      COMMON_EXTENSIONS[content_type]
+    end
 
-      result
+    def info_for_audio(path)
+      info = audio_file_info_ffprobe(path)
+      audio_info = {
+        format:       audio_file_format(path, info),
+        channel_mode: audio_file_channels(path, info) <= 1 ? 'Mono' : 'Stereo',
+        channels:     audio_file_channels(path, info),
+        bit_rate:     audio_file_bit_rate(path, info),
+        length:       audio_file_duration(path, info),
+        sample_rate:  audio_file_sample_rate(path, info)
+      }
+      basic_info_for_file(path).merge(audio_info)
+    end
+
+    def info_for_mpeg(path, info = nil)
+      info = info_for_audio(path)
+      mp3_info ||= Mp3Info.new(path)
+      info[:version] = mp3_info.mpeg_version
+      info[:layer] = mp3_info.layer
+      info[:padding] = mp3_info.header[:padding]
+      info
     end
 
     alias info_for_mp2 info_for_mpeg
     alias info_for_mp3 info_for_mpeg
 
-    def info_for_wav(wav_file_path)
-      wf = WaveFile.parse(wav_file_path)
-      fmt = wf.chunks[:fmt]
-      {
-        :size         => File.size(wav_file_path),
-        :content_type => 'audio/vnd.wave',
-        :channel_mode => fmt.number_of_channels <= 1 ? 'Mono' : 'Stereo',
-        :bit_rate     => (fmt.byte_rate * 8) / 1000, #kilo bytes per sec
-        :length       => wf.duration,
-        :sample_rate  => fmt.sample_rate
-      }
+    def content_type(path)
+      mime_magic_content_type(path) || file_content_type(path)
     end
 
-    def info_for_audio(path)
-      info = audio_file_info_ffprobe(path)
-      {
-        size:         info['format']['size'].to_i,
-        content_type: (MimeMagic.by_path(path) || MimeMagic.by_magic(path)).to_s,
-        format:       audio_file_format(path, info),
-        channel_mode: audio_file_channels(path, info) <= 1 ? 'Mono' : 'Stereo',
-        bit_rate:     audio_file_bit_rate(path, info),
-        length:       audio_file_duration(path, info),
-        sample_rate:  audio_file_sample_rate(path, info)
-      }
+    def mime_magic_content_type(path)
+      (MimeMagic.by_path(path) || MimeMagic.by_magic(path)).to_s
+    end
+
+    def file_content_type(path)
+      check_local_file(path)
+      out, err = run_command("#{bin(:file)} --brief --mime-type '#{path}'", nice: 'n', echo_return: false)
+      out.chomp
     end
 
     def audio_file_format(path, info = nil)
@@ -1006,7 +1030,7 @@ module AudioMonster
       if name.to_s.starts_with?('encode_wav_pcm_from_')
         decode_audio(*args)
       elsif name.to_s.starts_with?('info_for_')
-        info_for_audio(*args)
+        info_for(*args)
       else
         super
       end
