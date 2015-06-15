@@ -266,9 +266,10 @@ module AudioMonster
     def info_for_mpeg(path, info = nil)
       info = info_for_audio(path)
       mp3_info ||= Mp3Info.new(path)
-      info[:version] = mp3_info.mpeg_version
-      info[:layer] = mp3_info.layer
-      info[:padding] = mp3_info.header[:padding]
+      info[:channel_mode] = mp3_info.channel_mode
+      info[:version]      = mp3_info.mpeg_version
+      info[:layer]        = mp3_info.layer
+      info[:padding]      = mp3_info.header[:padding]
       info
     end
 
