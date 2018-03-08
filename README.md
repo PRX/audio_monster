@@ -1,20 +1,18 @@
 # AudioMonster
 
 AudioMonster manipulates and transcodes audio.
-It wraps a number of different command line binaries such as sox, lame, flac, twolame, and ffmpeg.
+It wraps a number of different command line binaries such as sox, lame, twolame, and ffmpeg.
 
 ## Dependencies
 
-The following binary tools are required. They are available via most OS package managers. 
+The following binary tools are required. They are available via most OS package managers.
 
 For OS X use homebrew:
 
 ```
 brew install lame
-brew install flac
 brew install sox
 brew install twolame --frontend
-brew install madplay
 brew install mp3val
 brew install ffmpeg
 ```
@@ -26,10 +24,8 @@ http://wiki.centos.org/TipsAndTricks/MultimediaOnCentOS7
 
 ```
 yum install lame
-yum install flac
-yum install sox 
-yum install twolame 
-yum install madplay
+yum install sox
+yum install twolame
 yum install mp3val
 yum install ffmpeg
 yum install libsndfile-devel libsndfile-utils
@@ -60,6 +56,16 @@ It will default to logging to STDOUT, or a logger can be configured.
 For convenience, all methods can be called from the AudioMonster module.
 
 The `monster_test.rb` contains examples of method calls.
+
+## Development
+To print potential expect checks, I sometimes change `AudioMonster`:
+```ruby
+def self.method_missing(method, *args, &block)
+  r = monster.send(method, *args)
+  puts "audio_monster.expect(:#{method}, #{r}, #{args.map { |a| a.class.name }})"
+  r
+end
+```
 
 ## Contributing
 
