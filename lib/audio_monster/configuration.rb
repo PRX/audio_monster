@@ -12,8 +12,6 @@ module AudioMonster
     MP3VAL_WARNING_RE  = /WARNING/
     MP3VAL_ERROR_RE    = /ERROR/
     MP3VAL_IGNORE_RE   = /(^Done!|Non-layer-III frame encountered. See related INFO message for details.|No supported tags in the file|It seems that file is truncated or there is garbage at the end of the file|MPEG stream error, resynchronized successfully)/
-    MPCK_ERROR_RE      = /(mpck:|errors)/
-    MPCK_IGNORE_RE     = /errors(\s*)(CRC error|none)/
     LAME_SUCCESS_RE    = /0/
     LAME_ERROR_RE      = /fatal error/
     SOX_ERROR_RE       = /error:/
@@ -35,7 +33,7 @@ module AudioMonster
 
     AES46_2002_TIME_FORMAT = '%H:%M:%S'
 
-    BINARIES_KEYS = [:file, :ffmpeg, :ffprobe, :flac, :lame, :mpck, :mp3val, :sox, :soxi, :madplay, :twolame].freeze
+    BINARIES_KEYS = [:file, :ffmpeg, :ffprobe, :lame, :mp3val, :sox, :soxi, :twolame].freeze
 
     VALID_OPTIONS_KEYS = ([
       :logger,
@@ -115,13 +113,10 @@ module AudioMonster
       self.file    = 'file'
       self.ffmpeg  = 'ffmpeg'
       self.ffprobe = 'ffprobe'
-      self.flac    = 'flac'
       self.lame    = 'lame'
-      self.mpck    = 'mpck'
       self.mp3val  = 'mp3val'
       self.sox     = 'sox'
       self.soxi    = 'soxi'
-      self.madplay = 'madplay'
       self.twolame = 'twolame'
       self
     end
