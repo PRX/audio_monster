@@ -3,6 +3,8 @@
 AudioMonster manipulates and transcodes audio.
 It wraps a number of different command line binaries such as sox, lame, twolame, and ffmpeg.
 
+[![Build Status](https://travis-ci.org/PRX/audio_monster.svg?branch=master)](https://travis-ci.org/PRX/audio_monster)
+
 ## Dependencies
 
 The following binary tools are required. They are available via most OS package managers.
