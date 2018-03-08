@@ -11,7 +11,7 @@ describe AudioMonster do
   end
 
   it 'delegates methods to monster' do
-    AudioMonster.flac.must_equal 'flac'
+    AudioMonster.ffmpeg.must_equal 'ffmpeg'
   end
 
   it 'returns an instance of monster' do

@@ -24,6 +24,7 @@ module AudioMonster
     COMMON_EXTENSIONS = {
       'application/xml' => 'xml',
       'audio/mpeg' => 'mp3',
+      'audio/flac' => 'flac',
       'audio/mp4'  => 'm4a',
       'audio/ogg'  => 'ogg',
       'image/jpeg' => 'jpg',
@@ -170,39 +171,6 @@ module AudioMonster
       ranges
     end
 
-    def encode_wav_pcm_from_mpeg(original_path, wav_path, options={})
-      logger.info "encode_wav_pcm_from_mpeg: #{original_path}, #{wav_path}, #{options.inspect}"
-      # check to see if there is an original
-      check_local_file(original_path)
-
-      logger.debug "encode_wav_pcm_from_mpeg: start"
-      command = "#{bin(:madplay)} -Q -i --output=wave:'#{wav_path}' '#{original_path}'"
-
-      out, err = run_command(command)
-
-      # check to see if there is a file created, or don't go on.
-      check_local_file(wav_path)
-      return [out, err]
-    end
-
-    def encode_wav_pcm_from_flac(original_path, wav_path, options={})
-      logger.info "encode_wav_pcm_from_flac: #{original_path}, #{wav_path}, #{options.inspect}"
-      # check to see if there is an original
-      check_local_file(original_path)
-
-      logger.debug "encode_wav_pcm_from_mpeg: start"
-      command = "#{bin(:flac)} -s -f --decode '#{original_path}' --output-name='#{wav_path}'"
-      out, err = run_command(command)
-
-      # check to see if there is a file created, or don't go on.
-      check_local_file(wav_path)
-      return [out, err]
-    end
-
-    alias encode_wav_pcm_from_mp2 encode_wav_pcm_from_mpeg
-    alias encode_wav_pcm_from_mp3 encode_wav_pcm_from_mpeg
-
-    # experimental...should work on any ffmpeg compatible file
     def decode_audio(original_path, wav_path, options={})
       # check to see if there is an original
       logger.info "decode_audio: #{original_path}, #{wav_path}, #{options.inspect}"
@@ -771,44 +739,6 @@ module AudioMonster
       return true
     end
 
-    def append_mp3_to_wav(wav_path, mp3_path, out_path, add_length, fade_length=5)
-      # raise "append_mp3_to_wav: Can't find file to create mp3 preview of: #{mp3_path}" unless File.exist?(mp3_path)
-
-      mp3info = Mp3Info.new(mp3_path)
-      raise "mp3 is not sufficiently long enough (#{mp3info.length.to_i}) to add length (#{add_length})" if mp3info.length.to_i < add_length
-      append_length = [mp3info.length.to_i, (add_length - 1)].min
-      append_fade_length = [mp3info.length.to_i, fade_length].min
-
-
-      # find out if the wav file is stereo or mono as this meeds to match the wav from the mp3
-      wavinfo = info_for_wav(wav_path)
-      channels = wavinfo[:channel_mode] == 'Mono' ? 1 : 2
-      sample_rate = wavinfo[:sample_rate]
-      append_file = nil
-
-      begin
-        append_file = create_temp_file(mp3_path)
-        append_file.close
-
-        # create  the mp3 to append
-        command = "#{bin(:madplay)} -q -o wave:- '#{mp3_path}' - | #{bin(:sox)} -t wav - -t raw -s -b 16 -c #{channels} - trim 0 #{append_length} | #{bin(:sox)} -t raw -r #{sample_rate} -s -b 16 -c #{channels} - -t wav - fade h 0 #{append_length} #{append_fade_length} | #{bin(:sox)} -t wav - -t wav '#{append_file.path}' pad 1 0"
-        out, err = run_command(command)
-        response = out + err
-        response.split("\n").each{ |out| raise("append_mp3_to_wav: create append file error: '#{response}' on:\n #{command}") if out =~ SOX_ERROR_RE }
-
-        # append the files to out_filew
-        command = "#{bin(:sox)} -t wav '#{wav_path}' -t wav '#{append_file.path}' -t wav '#{out_path}'"
-        out, err = run_command(command)
-        response = out + err
-        response.split("\n").each{ |out| raise("append_mp3_to_wav: create append file error: '#{response}' on:\n #{command}") if out =~ SOX_ERROR_RE }
-      ensure
-        append_file.close rescue nil
-        append_file.unlink rescue nil
-      end
-
-      return true
-    end
-
     def normalize_wav(wav_path, out_path, level=-9)
       logger.info "normalize_wav: wav_path:#{wav_path}, level:#{level}"
       command = "#{bin(:sox)} -t wav '#{wav_path}' -t wav '#{out_path}' gain -n #{level.to_i}"
@@ -823,10 +753,6 @@ module AudioMonster
       options = HashWithIndifferentAccess.new(options)
 
       info = mp3info_validation(audio_file_path, options)
-
-      # there are condtions where this spews output uncontrollably - so lose it for now: AK on 20080915
-      #   e.g. mpck:/home/app/mediajoint/tmp/audio_monster/prxfile-66097_111955868219902-0:3366912:read error
-      # mpck_validation(audio_file_path, errors) if errors.size <= 0
 
       # if the format seems legit, check the audio itself
       mp3val_validation(audio_file_path, options)
@@ -1014,19 +940,6 @@ module AudioMonster
         logger.error "run_command:Timeout Error - running command, took longer than #{timeout} seconds to execute: '#{cmd}'"
         raise toe
       end
-    end
-
-    def mpck_validation(audio_file_path, options)
-      errors= []
-      # validate using mpck
-      response = run_command("nice -n 19 #{bin(:mpck)} #{audio_file_path}")
-      response.split("\n").each { |o|
-        if ((o =~ MPCK_ERROR_RE) && !(o =~ MPCK_IGNORE_RE))
-          errors << "is not a valid mp2 file. The file is bad according to the 'mpck' audio check."
-        end
-      }
-
-      errors
     end
 
     def method_missing(name, *args, &block)
